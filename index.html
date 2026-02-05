@@ -11,21 +11,26 @@
 
     <title>EZ PDF</title>
     <style>
+    :root {
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    }
     * { margin: 0; }
     * { padding: 0; }
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
     body { background: #0a0a0a; }
     body { color: #e0e0e0; }
-    body { min-height: 100vh; }
+    body { min-height: 100dvh; }
     body { min-height: -webkit-fill-available; }
+    body { min-height: 100vh; }
     body { padding: 0; }
     body { overflow-x: hidden; }
     body { -webkit-font-smoothing: antialiased; }
     body { -moz-osx-font-smoothing: grayscale; }
-    body { padding-left: env(safe-area-inset-left); }
-    body { padding-right: env(safe-area-inset-right); }
-    html { height: -webkit-fill-available; }
+    body { padding-left: var(--safe-left); }
+    body { padding-right: var(--safe-right); }
+    html { height: 100dvh; }
     .header { background: #1a1a1a; }
     .header { border-bottom: 1px solid #2a2a2a; }
     .header { padding: 20px 40px; }
@@ -39,7 +44,7 @@
     .header-actions { display: flex; }
     .header-actions { gap: 12px; }
     .container { display: flex; }
-    .container { height: calc(100vh - 81px); }
+    .container { height: calc(100dvh - 81px); }
     .sidebar { width: 320px; }
     .sidebar { background: #1a1a1a; }
     .sidebar { border-right: 1px solid #2a2a2a; }
@@ -95,8 +100,6 @@
     .pages-list { padding: 20px; }
     .pages-list { -webkit-overflow-scrolling: touch; }
     .pages-list { overscroll-behavior: contain; }
-    .pages-list { will-change: scroll-position; }
-    .pages-list { transform: translateZ(0); }
     .page-item { background: #0a0a0a; }
     .page-item { border: 1px solid #2a2a2a; }
     .page-item { padding: 12px; }
@@ -107,7 +110,6 @@
     .page-item { position: relative; }
     .page-item { -webkit-tap-highlight-color: transparent; }
     .page-item { user-select: none; }
-    .page-item { -webkit-user-select: none; }
     .page-item { touch-action: pan-y; }
     .page-item:active { cursor: grabbing; }
     .page-item:hover { border-color: #3a3a3a; }
@@ -178,18 +180,15 @@
     .preview-area { overflow: auto; }
     .preview-area { -webkit-overflow-scrolling: touch; }
     .preview-area { overscroll-behavior: contain; }
-    .preview-area { transform: translateZ(0); }
-    .preview-area { will-change: scroll-position; }
     .preview-container { background: #fff; }
     .preview-container { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
     .preview-container { max-width: 800px; }
     .preview-container { width: 100%; }
     .preview-container { min-height: 600px; }
-    .preview-container { max-height: 80vh; }
+    .preview-container { max-height: 80dvh; }
     .preview-container { padding: 60px; }
     .preview-container { overflow-y: auto; }
     .preview-container { -webkit-overflow-scrolling: touch; }
-    .preview-container { transform: translateZ(0); }
     .preview-container img { max-width: 100%; }
     .preview-container img { height: auto; }
     .preview-container img { display: block; }
@@ -201,7 +200,6 @@
     .preview-container pre { line-height: 1.6; }
     .preview-container pre { color: #000; }
     .preview-container pre { tab-size: 4; }
-    .preview-container pre { -moz-tab-size: 4; }
     .preview-container code { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; }
     .code-header { background: #1e1e1e; }
     .code-header { color: #888; }
@@ -241,7 +239,6 @@
     .btn { justify-content: center; }
     .btn { -webkit-tap-highlight-color: transparent; }
     .btn { user-select: none; }
-    .btn { -webkit-user-select: none; }
     .btn { touch-action: manipulation; }
     .btn:hover:not(:disabled) { background: #2a2a2a; }
     .btn:hover:not(:disabled) { border-color: #3a3a3a; }
@@ -334,7 +331,6 @@
     .sidebar { bottom: 0; }
     .sidebar { width: 85%; }
     .sidebar { max-width: 320px; }
-    .sidebar { height: 100vh; }
     .sidebar { height: 100dvh; }
     .sidebar { max-height: none; }
     .sidebar { z-index: 1001; }
@@ -346,7 +342,7 @@
     .sidebar.open { transform: translateX(0); }
     .container { display: flex; }
     .container { flex-direction: row; }
-    .container { height: calc(100vh - 81px); }
+    .container { height: calc(100dvh - 81px); }
     .main-content { flex: 1; }
     .main-content { width: 100%; }
     .header { padding: 12px 16px; }
@@ -452,12 +448,12 @@
     .container { flex-direction: row; }
     .sidebar { width: 280px; }
     .sidebar { height: auto; }
-    .sidebar { max-height: calc(100vh - 60px); }
+    .sidebar { max-height: calc(100dvh - 60px); }
     .sidebar { border-right: 1px solid #2a2a2a; }
     .sidebar { border-bottom: none; }
     .header { padding: 8px 12px; }
     .header h1 { font-size: 14px; }
-    .pages-list { max-height: calc(100vh - 180px); }
+    .pages-list { max-height: calc(100dvh - 180px); }
     .preview-area { padding: 12px; }
     .preview-container { padding: 20px; }
     .preview-container { min-height: 200px; }
@@ -465,7 +461,8 @@
     .option-group { min-width: 150px; }
     }
     @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .page-preview img { image-rendering: -webkit-optimize-contrast; }
+    .page-preview img { image-rendering: pixelated; }
+    .page-preview img { image-rendering: -moz-crisp-edges; }
     .page-preview img { image-rendering: crisp-edges; }
     }
     @media print {
