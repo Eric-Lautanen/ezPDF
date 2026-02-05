@@ -13,16 +13,10 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
     * **Data:** Converts CSV and TSV files directly into formatted PDF tables.
 * **Smart Clipboard:** Paste text or images directly from your clipboard (Ctrl+V) to add them as pages.
 * **Drag & Drop:** Drag files directly into the window or reorder pages via drag-and-drop in the sidebar.
-* **Mobile Optimized:** Full mobile support with touch gestures, swipe-to-close menus, and responsive layout.
-* **Customization:**
-    * Set Document Title.
-    * Choose Page Size (A4, Letter, Legal).
-    * Toggle Page Numbers.
-* **Preview Mode:** Real-time preview of how content will appear before exporting.
+* **Mobile Optimized:** Full mobile support with touch gestures, side-by-side header buttons, and responsive layout.
+* **Customization:** Set Document Title, Page Size (A4, Letter, Legal), and Toggle Page Numbers.
 
 ## 🛠️ Supported File Types
-
-The converter automatically detects file types and formats them appropriately:
 
 | Category | Extensions |
 |----------|------------|
@@ -33,38 +27,40 @@ The converter automatically detects file types and formats them appropriately:
 
 ## 🚀 How to Download & Run (Offline Mode)
 
-Since this application is a single-file solution with all libraries contained within, you can run it entirely without an internet connection.
+This application is entirely self-contained in a single file. You can save it to your device and use it anywhere—even without an internet connection.
 
 ### 1. Download from GitHub
-1.  On the GitHub repository, click on the file named `index.html`.
-2.  Look for the **Download raw file** button (the downward arrow icon ⬇️ in the top right of the file view).
-3.  Right-click the button and select **"Save Link As..."** (or simply click it to download).
+1.  On the main repository page, click on the file named `index.html`.
+2.  On the top right of the file content area, look for the **"Download raw file"** button (it looks like a small downward arrow ⬇️).
+3.  **Right-click** that arrow icon and select **"Save Link As..."**.
+4.  Choose a location on your computer to save it.
 
 ### 2. Rename the File
-* The file will download as `index.html`. 
-* You can rename this to anything you like (e.g., `PDFConverter.html` or `UniversalPDF.html`) as long as it keeps the **.html** extension.
+* The file will likely save as `index.html`. 
+* You can rename it to something more descriptive, like `PDFConverter.html` or `ezPDF.html`. 
+* **Note:** Ensure the name ends in `.html`.
 
-### 3. Open & Use
-* Simply **double-click** the file on your computer.
-* It will open in your default web browser (Chrome, Firefox, Edge, or Safari).
-* **Privacy Note:** You can even turn off your Wi-Fi before opening it—the app will work perfectly because it is completely self-contained.
+### 3. How to Open
+* Simply **double-click** the file you just saved.
+* It will open in your web browser (Chrome, Firefox, Safari, or Edge).
+* You are now running the app locally and privately!
 
 ## 🧩 Technology Stack
 
 * **Core:** HTML5, CSS3, Vanilla JavaScript (ES6+).
 * **Self-Contained:** All libraries (like pdfmake) are bundled inside the HTML file to allow for zero-dependency offline use.
-* **Privacy:** In-memory processing (non-persistent for security).
+* **Privacy:** All processing is done in-memory; nothing is ever sent to a server.
 
 ## 🤝 Credits & Acknowledgements
 
 This project was built using the following open-source libraries and AI assistance:
 
 ### Libraries
-* **[pdfmake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine (embedded directly in the file).
+* **[pdfmake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine (embedded inline).
 
 ### Creators
 * **Eric Lautanen** - Lead Developer & UI/UX.
-* **Claude (Anthropic) & Gemini (Google)** - AI Engineering Partners & Code Assistants.
+* **Claude & Gemini** - AI Engineering Partners.
 
 ## 📄 License
 
@@ -72,4 +68,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-*Note: This application performs heavy processing in the browser. Performance depends on the device's available memory when processing very large high-resolution images.*
+*Note: Large high-resolution images require significant browser memory. For best performance on mobile, try to limit the number of ultra-high-res photos in a single export.*
