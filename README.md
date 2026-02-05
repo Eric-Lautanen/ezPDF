@@ -1,12 +1,12 @@
 # Universal PDF Converter 📄
 
-A powerful, privacy-focused, client-side web application that converts images, text, code, and data files into a single, formatted PDF document. 
+A powerful, privacy-focused, **100% offline-capable** client-side web application that converts images, text, code, and data files into a single, formatted PDF document. 
 
 [**🔗 Live Demo**](https://eric-lautanen.github.io/ezPDF/)
 
 ## ✨ Features
 
-* **100% Client-Side:** All processing happens in your browser. No files are ever uploaded to a server, ensuring maximum privacy.
+* **100% Client-Side & Offline:** All processing happens in your browser. All required libraries are embedded directly within the file. Once downloaded, you can use it without an internet connection. No files are ever uploaded to a server, ensuring maximum privacy.
 * **Multi-Format Support:**
     * **Images:** JPG, PNG, GIF, WebP, BMP (Auto-scaled to fit).
     * **Text & Code:** TXT, MD, HTML, CSS, JS, PY, JSON, XML, and many more. Code files retain formatting.
@@ -31,37 +31,40 @@ The converter automatically detects file types and formats them appropriately:
 | **Text** | `.txt`, `.md`, `.rtf`, `.log` |
 | **Data** | `.csv`, `.tsv` (Rendered as tables) |
 
-## 🚀 Quick Start
+## 🚀 How to Download & Run (Offline Mode)
 
-Since this is a single-file application, deployment is incredibly simple.
+Since this application is a single-file solution with all libraries contained within, you can run it entirely without an internet connection.
 
-### Option 1: Run Locally
-1. Download `PDFAnything.html`.
-2. Open it in any modern web browser (Chrome, Safari, Edge, Firefox).
+### 1. Download from GitHub
+1.  On the GitHub repository, click on the file named `index.html`.
+2.  Look for the **Download raw file** button (the downward arrow icon ⬇️ in the top right of the file view).
+3.  Right-click the button and select **"Save Link As..."** (or simply click it to download).
 
-### Option 2: Host Static
-Simply upload the `PDFAnything.html` file to any static host:
-* GitHub Pages
-* Netlify
-* Vercel
-* Cloudflare Pages
+### 2. Rename the File
+* The file will download as `index.html`. 
+* You can rename this to anything you like (e.g., `PDFConverter.html` or `UniversalPDF.html`) as long as it keeps the **.html** extension.
+
+### 3. Open & Use
+* Simply **double-click** the file on your computer.
+* It will open in your default web browser (Chrome, Firefox, Edge, or Safari).
+* **Privacy Note:** You can even turn off your Wi-Fi before opening it—the app will work perfectly because it is completely self-contained.
 
 ## 🧩 Technology Stack
 
 * **Core:** HTML5, CSS3, Vanilla JavaScript (ES6+).
-* **Styling:** Custom CSS with Dark Mode default, Flexbox/Grid, and Mobile-first media queries.
-* **Storage:** In-memory processing (non-persistent for security).
+* **Self-Contained:** All libraries (like pdfmake) are bundled inside the HTML file to allow for zero-dependency offline use.
+* **Privacy:** In-memory processing (non-persistent for security).
 
 ## 🤝 Credits & Acknowledgements
 
 This project was built using the following open-source libraries and AI assistance:
 
 ### Libraries
-* **[pdfmake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine.
+* **[pdfmake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine (embedded directly in the file).
 
 ### Creators
 * **Eric Lautanen** - Lead Developer & UI/UX.
-* **Claude (Anthropic)** - AI Engineering Partner & Code Assistant.
+* **Claude (Anthropic) & Gemini (Google)** - AI Engineering Partners & Code Assistants.
 
 ## 📄 License
 
