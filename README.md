@@ -2,7 +2,7 @@
 
 A powerful, privacy-focused, client-side web application that converts images, text, code, and data files into a single, formatted PDF document. 
 
-[🚀 **View Live Demo**](INSERT_YOUR_LIVE_DEMO_LINK_HERE)
+[**🔗 Live Demo**](https://eric-lautanen.github.io/ezPDF/)
 
 ## ✨ Features
 
@@ -60,7 +60,7 @@ This project was built using the following open-source libraries and AI assistan
 * **[pdfmake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine.
 
 ### Creators
-* **[Your Name/GitHub Handle]** - Lead Developer & UI/UX.
+* **Eric Lautanen** - Lead Developer & UI/UX.
 * **Claude (Anthropic)** - AI Engineering Partner & Code Assistant.
 
 ## 📄 License
