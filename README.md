@@ -31,9 +31,8 @@ This application is entirely self-contained in a single file. You can save it to
 
 ### 1. Download from GitHub
 1.  On the main repository page, click on the file named `index.html`.
-2.  On the top right of the file content area, look for the **"Download raw file"** button (it looks like a small downward arrow ⬇️).
-3.  **Right-click** that arrow icon and select **"Save Link As..."**.
-4.  Choose a location on your computer to save it.
+2.  On the top right of the file content area, look for the **"Download raw file"** button.
+3.  Choose a location on your computer to save it.
 
 ### 2. Rename the File
 * The file will likely save as `index.html`. 
