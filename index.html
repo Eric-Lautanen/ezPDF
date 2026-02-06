@@ -3008,14 +3008,29 @@
                 return;
             }
             e.preventDefault();
-
+        
+            // Check for images first
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    if (blob) {
+                        const file = new File([blob], `pasted-image-${Date.now()}.png`, { type: blob.type });
+                        await addPage(file);
+                        elements.pasteArea.value = '';
+                        return;
+                    }
+                }
+            }
+        
+            // If no image, handle text
             let pastedData = e.clipboardData.getData('text');
             if (!pastedData || pastedData.trim() === '') return;
-
+        
             pastedData = sanitizeText(pastedData);
-
+        
             const file = new File([pastedData], `pasted-${Date.now()}.txt`, { type: 'text/plain' });
-
+        
             await addPage(file);
             elements.pasteArea.value = '';
         }
@@ -5049,3 +5064,4 @@ async function exportPDF() {
     </script>
 </body>
 </html>
+
