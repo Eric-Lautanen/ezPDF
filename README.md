@@ -13,7 +13,7 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
     * **Data:** CSV and TSV files rendered as formatted PDF tables with headers.
     * **Text:** Plain text, Markdown, RTF, and log files.
 * **Syntax Highlighting:** Code files are beautifully highlighted with theme support (Light & Dark).
-* **Real-Time Preview:** See exactly how your PDF will look before exporting, with live updates as you adjust settings.
+* **Real-Time Preview:** See how your PDF will look before exporting, with live updates as you adjust settings.
 * **Paste Text Area:** Quick input area for adding plain text notes and snippets.
 * **Drag & Drop:** Drag files directly into the window.
 * **Mobile Optimized:** Full mobile support with touch gestures, responsive layout, and optimized scrolling.
