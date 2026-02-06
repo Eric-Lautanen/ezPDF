@@ -1,4 +1,4 @@
-# EZ PDF 📄
+# ezPDF 📄
 
 A powerful, privacy-focused, **100% offline-capable** client-side web application that converts images, text, code, and data files into a single, beautifully formatted PDF document.
 
