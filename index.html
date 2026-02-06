@@ -2486,10 +2486,20 @@
         // CSS font stacks for preview/display
         function getPreviewFontFamily(fontName) {
             const fontMap = {
-                'Helvetica': 'Helvetica, Arial, sans-serif',
                 'Courier': '"Courier New", Courier, monospace',
+                'Courier-Bold': '"Courier New", Courier, monospace',
+                'Courier-Oblique': '"Courier New", Courier, monospace',
+                'Courier-BoldOblique': '"Courier New", Courier, monospace',
+                'Helvetica': 'Helvetica, Arial, sans-serif',
+                'Helvetica-Bold': 'Helvetica, Arial, sans-serif',
+                'Helvetica-Oblique': 'Helvetica, Arial, sans-serif',
+                'Helvetica-BoldOblique': 'Helvetica, Arial, sans-serif',
                 'Times': '"Times New Roman", Times, serif',
-                'Roboto': 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+                'Times-Bold': '"Times New Roman", Times, serif',
+                'Times-Italic': '"Times New Roman", Times, serif',
+                'Times-BoldItalic': '"Times New Roman", Times, serif',
+                'Symbol': 'Symbol, serif',
+                'ZapfDingbats': 'ZapfDingbats, sans-serif'
             };
             return fontMap[fontName] || fontMap['Helvetica'];
         }
@@ -2497,12 +2507,30 @@
         // jsPDF font names for PDF export (lowercase)
         function getPDFFontName(fontName) {
             const fontMap = {
-                'Helvetica': 'helvetica',
                 'Courier': 'courier',
+                'Courier-Bold': 'courier',
+                'Courier-Oblique': 'courier',
+                'Courier-BoldOblique': 'courier',
+                'Helvetica': 'helvetica',
+                'Helvetica-Bold': 'helvetica',
+                'Helvetica-Oblique': 'helvetica',
+                'Helvetica-BoldOblique': 'helvetica',
                 'Times': 'times',
-                'Roboto': 'helvetica' // Roboto not available in jsPDF, use helvetica
+                'Times-Bold': 'times',
+                'Times-Italic': 'times',
+                'Times-BoldItalic': 'times',
+                'Symbol': 'symbol',
+                'ZapfDingbats': 'zapfdingbats'
             };
             return fontMap[fontName] || 'helvetica';
+        }
+        
+        // Get font style from full font name
+        function getPDFFontStyle(fontName) {
+            if (fontName.includes('BoldOblique') || fontName.includes('BoldItalic')) return 'bolditalic';
+            if (fontName.includes('Bold')) return 'bold';
+            if (fontName.includes('Oblique') || fontName.includes('Italic')) return 'italic';
+            return 'normal';
         }
 
         // ============ CENTRALIZED SYNTAX HIGHLIGHTING COLOR MAP ============
@@ -3271,7 +3299,45 @@
                                 return;
                             }
 
-                            const headers = lines[0].split(delimiter).map(h => sanitizeText(h.trim().replace(/^["']|["']$/g, '')));
+                            // Parse CSV line respecting quotes
+                            function parseCSVLine(line, delimiter) {
+                                const cells = [];
+                                let current = '';
+                                let inQuotes = false;
+                                let quoteChar = null;
+                                
+                                for (let j = 0; j < line.length; j++) {
+                                    const char = line[j];
+                                    const nextChar = line[j + 1];
+                                    
+                                    if ((char === '"' || char === "'") && !inQuotes) {
+                                        // Start of quoted field
+                                        inQuotes = true;
+                                        quoteChar = char;
+                                    } else if (char === quoteChar && inQuotes) {
+                                        // Check for escaped quote (doubled quotes)
+                                        if (nextChar === quoteChar) {
+                                            current += char;
+                                            j++; // Skip next quote
+                                        } else {
+                                            // End of quoted field
+                                            inQuotes = false;
+                                            quoteChar = null;
+                                        }
+                                    } else if (char === delimiter && !inQuotes) {
+                                        // Field separator
+                                        cells.push(sanitizeText(current.trim()));
+                                        current = '';
+                                    } else {
+                                        current += char;
+                                    }
+                                }
+                                // Add last cell
+                                cells.push(sanitizeText(current.trim()));
+                                return cells;
+                            }
+                            
+                            const headers = parseCSVLine(lines[0], delimiter);
                             
                             if (headers.length === 0 || headers.every(h => !h)) {
                                 reject(new Error('Invalid or empty headers'));
@@ -3280,25 +3346,14 @@
 
                             const rows = [];
                             for (let i = 1; i < lines.length; i++) {
-                                const line = lines[i];
-                                const cells = [];
-                                let current = '';
-                                let inQuotes = false;
+                                const cells = parseCSVLine(lines[i], delimiter);
                                 
-                                for (let j = 0; j < line.length; j++) {
-                                    const char = line[j];
-                                    if (char === '"' || char === "'") {
-                                        inQuotes = !inQuotes;
-                                    } else if (char === delimiter && !inQuotes) {
-                                        cells.push(sanitizeText(current.trim().replace(/^["']|["']$/g, '')));
-                                        current = '';
-                                    } else {
-                                        current += char;
-                                    }
+                                // Pad cells to match header count
+                                while (cells.length < headers.length) {
+                                    cells.push('');
                                 }
-                                cells.push(sanitizeText(current.trim().replace(/^["']|["']$/g, '')));
                                 
-                                if (cells.length > 0 && cells.some(c => c)) {
+                                if (cells.some(c => c)) {
                                     rows.push(cells);
                                 }
                             }
@@ -4601,6 +4656,7 @@ async function exportPDF() {
         const decorationMode = elements.headerFooterOptions.value;
         const selectedFont = elements.fontFamily.value || 'Helvetica';
         const fontFamily = getPDFFontName(selectedFont);
+        const defaultFontStyle = getPDFFontStyle(selectedFont);
         const fontSize = parseInt(elements.fontSize.value) || 10;
         const codeTheme = elements.codeTheme.value || 'light';
 
@@ -4718,11 +4774,11 @@ async function exportPDF() {
                             
                             // Draw header text
                             pdf.setFontSize(9);
-                            pdf.setFont(fontFamily, 'bold');
+                            pdf.setFont(fontFamily, defaultFontStyle === 'normal' ? 'bold' : defaultFontStyle);
                             pdf.setTextColor(...headerTextColor);
                             pdf.text(getLanguageDisplayName(language).toUpperCase(), margin + 12, yPosition + 15);
                             
-                            pdf.setFont(fontFamily, 'normal');
+                            pdf.setFont(fontFamily, defaultFontStyle);
                             pdf.setTextColor(...filenameColor);
                             pdf.text(page.name, pageWidth - margin - 12, yPosition + 15, { align: 'right', maxWidth: contentWidth - 100 });
                             
@@ -4731,7 +4787,7 @@ async function exportPDF() {
                         
                         // Set code font and color
                         pdf.setFontSize(Math.max(fontSize - 1, 8));
-                        pdf.setFont(fontFamily, 'normal');
+                        pdf.setFont(fontFamily, defaultFontStyle);
                         
                         // Try to get syntax-highlighted tokens
                         let tokens = [];
@@ -4921,7 +4977,7 @@ async function exportPDF() {
                         } else {
                             // --- PLAIN TEXT RENDERING (STRICT WRAPPING) ---
                             pdf.setFontSize(fontSize);
-                            pdf.setFont(fontFamily, 'normal');
+                            pdf.setFont(fontFamily, defaultFontStyle);
                             pdf.setTextColor(0, 0, 0);
                             
                             const lines = safeText.split('\n');
@@ -4958,35 +5014,66 @@ async function exportPDF() {
                     const tableBorder = codeTheme === 'light' ? [221, 221, 221] : [58, 58, 58];
                     const tableText = codeTheme === 'light' ? [0, 0, 0] : [224, 224, 224];
                     const tableBodyBg = codeTheme === 'light' ? [255, 255, 255] : [26, 26, 26];
+                    const tableAltBg = codeTheme === 'light' ? [249, 249, 249] : [22, 22, 22];
                     
-                    // Use autoTable plugin if available
+                    // Use autoTable plugin if available (it should be loaded)
                     if (typeof pdf.autoTable === 'function') {
                         pdf.autoTable({
                             startY: yPosition,
                             head: [page.content.headers],
                             body: page.content.rows,
-                            margin: { left: margin, right: margin },
+                            margin: { left: margin, right: margin, top: topMargin, bottom: bottomMargin },
                             styles: { 
-                                fontSize: 9, 
-                                cellPadding: 5,
+                                fontSize: 7,
+                                cellPadding: 2.5,
                                 textColor: tableText,
                                 fillColor: tableBodyBg,
                                 lineColor: tableBorder,
-                                lineWidth: 0.5
+                                lineWidth: 0.25,
+                                overflow: 'ellipsize',
+                                halign: 'left',
+                                valign: 'middle',
+                                minCellHeight: 12,
+                                font: fontFamily,
+                                fontStyle: 'normal'
                             },
                             headStyles: { 
                                 fillColor: tableHeaderBg, 
                                 textColor: tableHeaderText, 
-                                fontStyle: 'bold' 
+                                fontStyle: 'bold',
+                                fontSize: 7.5,
+                                cellPadding: 3,
+                                halign: 'left',
+                                valign: 'middle',
+                                minCellHeight: 15,
+                                overflow: 'ellipsize'
                             },
-                            theme: 'grid'
+                            alternateRowStyles: {
+                                fillColor: tableAltBg
+                            },
+                            theme: 'grid',
+                            tableWidth: contentWidth,
+                            showHead: 'everyPage',
+                            tableLineColor: tableBorder,
+                            tableLineWidth: 0.25,
+                            didDrawPage: function(data) {
+                                currentPage = pdf.internal.getNumberOfPages() - 1;
+                            },
+                            didParseCell: function(data) {
+                                if (data.section === 'body') {
+                                    data.cell.styles.minCellHeight = 12;
+                                }
+                            }
                         });
+                        
                         // Update yPosition after autoTable
                         yPosition = pdf.lastAutoTable.finalY + 20;
                     } else {
-                        // Simple table rendering fallback
+                        // Fallback if autoTable not loaded (shouldn't happen)
+                        console.warn('autoTable plugin not loaded, using basic table rendering');
+                        
                         pdf.setFontSize(10);
-                        pdf.setFont(fontFamily, 'bold');
+                        pdf.setFont(fontFamily, defaultFontStyle === 'normal' ? 'bold' : defaultFontStyle);
                         
                         // Draw headers
                         let xPos = margin;
@@ -4997,14 +5084,15 @@ async function exportPDF() {
                         
                         pdf.setTextColor(...tableHeaderText);
                         page.content.headers.forEach(header => {
-                            pdf.text(String(header || '').substring(0, 30), xPos + 5, yPosition + 13);
+                            const text = String(header || '').substring(0, 30);
+                            pdf.text(text, xPos + 5, yPosition + 13);
                             xPos += colWidth;
                         });
                         
                         yPosition += 20;
                         
                         // Draw rows
-                        pdf.setFont(fontFamily, 'normal');
+                        pdf.setFont(fontFamily, defaultFontStyle);
                         pdf.setFontSize(9);
                         pdf.setTextColor(...tableText);
                         
@@ -5017,13 +5105,14 @@ async function exportPDF() {
                             
                             // Alternate row background
                             if (rowIndex % 2 === 1) {
-                                pdf.setFillColor(...tableBodyBg);
+                                pdf.setFillColor(...tableAltBg);
                                 pdf.rect(margin, yPosition, contentWidth, 20, 'F');
                             }
                             
                             xPos = margin;
                             row.forEach(cell => {
-                                pdf.text(String(cell || '').substring(0, 30), xPos + 5, yPosition + 13);
+                                const text = String(cell || '').substring(0, 30);
+                                pdf.text(text, xPos + 5, yPosition + 13);
                                 xPos += colWidth;
                             });
                             
@@ -5204,6 +5293,7 @@ async function exportPDF() {
     </script>
 </body>
 </html>
+
 
 
 
