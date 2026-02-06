@@ -14,14 +14,14 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
     * **Text:** Plain text, Markdown, RTF, and log files.
 * **Syntax Highlighting:** Code files are beautifully highlighted with theme support (Light & Dark).
 * **Real-Time Preview:** See exactly how your PDF will look before exporting, with live updates as you adjust settings.
-* **Smart Clipboard:** Paste text or images directly from your clipboard (Ctrl/Cmd+V) to add them as pages.
+* **Paste Text Area:** Quick input area for adding plain text notes and snippets.
 * **Drag & Drop:** Drag files directly into the window or reorder pages via drag-and-drop in the sidebar.
 * **Mobile Optimized:** Full mobile support with touch gestures, responsive layout, and optimized scrolling.
 * **Extensive Customization:** 
     * Document Title
     * Page Size (A4, Letter, Legal)
     * Headers & Footers (Page Numbers, Titles, or Both)
-    * Font Selection (Roboto)
+    * Font Selection (Helvetica, Times New Roman, Courier)
     * Font Size (8pt - 16pt)
     * Code Theme (Light or Dark for syntax highlighting)
 
@@ -79,31 +79,33 @@ This application is entirely self-contained in a single file. You can save it to
 ## 🧩 Technology Stack
 
 * **Core:** HTML5, CSS3, Vanilla JavaScript (ES6+)
-* **PDF Generation:** [pdfMake](http://pdfmake.org/) v0.2.7 (embedded inline)
+* **PDF Generation:** [jsPDF](https://github.com/parallax/jsPDF) v2.5.1 with autoTable plugin v3.5.31 (embedded inline)
 * **Syntax Highlighting:** [highlight.js](https://highlightjs.org/) (GitHub Light & Dark themes embedded inline)
 * **Self-Contained:** All libraries and stylesheets bundled inside the HTML file for zero-dependency offline use
 * **Privacy-First:** All processing is done in-memory; nothing is ever sent to a server
 
 ## 📋 Todo List
 
-- [ ] Add additional font options (Times New Roman, Arial, Courier New, etc.)
 - [ ] Add emoji support in text content
-- [ ] Fix any remaining mobile layout edge cases
 - [ ] Add page orientation support (Portrait/Landscape)
 - [ ] Add custom margin controls
+- [ ] Add watermark support
+- [ ] Improve table rendering for very wide CSV files
 
 ## 🐛 Known Issues
 
 - Large files (10MB+) may cause slower preview rendering on older devices
 - Some very long code files may need manual page break optimization
 - CSV files with irregular column counts may render with slight formatting inconsistencies
+- Paste area is for plain text only - code detection works only for uploaded files with code extensions
 
 ## 🤝 Credits & Acknowledgements
 
 This project was built using the following open-source libraries and AI assistance:
 
 ### Libraries
-* **[pdfMake](http://pdfmake.org/)** (v0.2.7) - Client-side PDF generation engine
+* **[jsPDF](https://github.com/parallax/jsPDF)** (v2.5.1) - Client-side PDF generation engine
+* **[jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)** (v3.5.31) - Table plugin for jsPDF
 * **[highlight.js](https://highlightjs.org/)** - Syntax highlighting for code files
 
 ### Creators
@@ -124,6 +126,7 @@ This project is open source and available under the [MIT License](LICENSE).
 * **Tables:** CSV/TSV files render best with fewer than 20 columns
 * **Mobile:** Close the sidebar after adding files to maximize preview space
 * **Performance:** For large exports (20+ files), consider exporting in smaller batches
+* **Text vs Code:** Upload files with proper extensions (.js, .py, etc.) for syntax highlighting - the paste area is for plain text only
 
 ---
 
