@@ -726,7 +726,7 @@
                         </select>
                     </div>
                     <div class="option-group">
-                        <label class="option-label" for="codeTheme">Code Theme</label>
+                        <label class="option-label" for="codeTheme">Code/Table Theme</label>
                         <select id="codeTheme">
                             <option value="light">Light (Print-Friendly)</option>
                             <option value="dark">Dark</option>
@@ -2633,22 +2633,6 @@
                 .replace(/[\u25A0-\u25FF]/g, '*'); // Geometric shapes
         }
 
-        async function emojiToDataUrl(emoji, size = 64) {
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.font = `${size * 0.8}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Draw the emoji
-            ctx.fillText(emoji, size / 2, size / 2 + (size * 0.05));
-            
-            return canvas.toDataURL('image/png');
-        }
-
         async function renderTextWithEmojis(pdf, text, x, y, options = {}) {
             const { fontSize = 10, color = [0, 0, 0], maxWidth } = options;
             let currentX = x;
@@ -2671,7 +2655,7 @@
                     pdf.addImage(emojiData, 'PNG', currentX, y - emojiSize * 0.8, emojiSize, emojiSize);
                     currentX += emojiSize + 2;
                 } catch (err) {
-                    console.warn(`Failed to render emoji "${emoji}":`, err);
+                    // Silent fallback to question mark
                     pdf.text('?', currentX, y);
                     currentX += pdf.getTextWidth(emoji) || (fontSize * 1.2);
                 }
@@ -2684,7 +2668,6 @@
                 pdf.text(remaining, currentX, y, { maxWidth: maxWidth ? maxWidth - (currentX - x) : undefined });
                 currentX += pdf.getTextWidth(remaining);
             }
-            console.log(text.match(emojiRegex));  // Add this in renderTextWithEmojis
             return currentX;
         }
 
@@ -2860,15 +2843,19 @@
         }
 
         document.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            elements.dropZone.style.display = 'flex';
-            elements.dropZone.style.position = 'fixed';
-            elements.dropZone.style.top = '0';
-            elements.dropZone.style.left = '0';
-            elements.dropZone.style.width = '100%';
-            elements.dropZone.style.height = '100%';
-            elements.dropZone.style.zIndex = '9999';
-            elements.dropZone.classList.add('dragover');
+            // Only show drop zone for external file drags, not internal page reordering
+            const draggingPage = document.querySelector('.dragging');
+            if (!draggingPage) {
+                e.preventDefault();
+                elements.dropZone.style.display = 'flex';
+                elements.dropZone.style.position = 'fixed';
+                elements.dropZone.style.top = '0';
+                elements.dropZone.style.left = '0';
+                elements.dropZone.style.width = '100%';
+                elements.dropZone.style.height = '100%';
+                elements.dropZone.style.zIndex = '9999';
+                elements.dropZone.classList.add('dragover');
+            }
         });
 
         document.addEventListener('dragleave', (e) => {
@@ -2879,13 +2866,26 @@
         });
 
         document.addEventListener('drop', (e) => {
-            e.preventDefault();
-            elements.dropZone.classList.remove('dragover');
-            elements.dropZone.style.display = 'none';
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleMultipleFiles(Array.from(files));
+            // Only handle external file drops, not internal page reordering
+            const draggingPage = document.querySelector('.dragging');
+            if (!draggingPage) {
+                e.preventDefault();
+                elements.dropZone.classList.remove('dragover');
+                elements.dropZone.style.display = 'none';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleMultipleFiles(Array.from(files));
+                }
+            }
+        });
+
+        // Add dragover to pagesList container to ensure smooth reordering
+        document.getElementById('pagesList').addEventListener('dragover', (e) => {
+            const draggingPage = document.querySelector('.dragging');
+            if (draggingPage) {
+                e.preventDefault();
+                e.stopPropagation();
             }
         });
 
@@ -3008,7 +3008,7 @@
                 return;
             }
             e.preventDefault();
-        
+
             // Check for images first
             const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
@@ -3022,15 +3022,15 @@
                     }
                 }
             }
-        
+
             // If no image, handle text
             let pastedData = e.clipboardData.getData('text');
             if (!pastedData || pastedData.trim() === '') return;
-        
+
             pastedData = sanitizeText(pastedData);
-        
+
             const file = new File([pastedData], `pasted-${Date.now()}.txt`, { type: 'text/plain' });
-        
+
             await addPage(file);
             elements.pasteArea.value = '';
         }
@@ -3218,7 +3218,6 @@
                             language: language
                         };
                         page.thumbnailData = text.substring(0, 200);
-                        console.log('Text content processed:', text.length, 'characters', 'type:', page.type, 'language:', language);
                         resolve();
                     };
 
@@ -3242,50 +3241,30 @@
                         try {
                             const text = sanitizeText(e.target.result);
 
-                            let finalType = 'text';
-                            let detectedLang = null;
-
-                            if (typeof hljs !== 'undefined') {
-                                try {
-                                    const result = hljs.highlightAuto(text);
-                                    if (result.language && result.relevance > 5) {
-                                        finalType = 'code';
-                                        detectedLang = result.language;
-                                    }
-                                } catch (e) {}
-                            }
-
-                            if (finalType === 'code') {
-                                const emojiMatches = (text.match(emojiRegex) || []).length;
-                                const lines = text.split(/\r?\n/);
-                                const listLike = lines.filter(line => {
-                                    const t = line.trim();
-                                    return /^\d+\.\s/.test(t) || /^\p{Extended_Pictographic}/.test(t);
-                                }).length;
-                                const emojiDensity = lines.length > 0 ? emojiMatches / lines.length : 0;
-                                const listDensity = lines.length > 0 ? listLike / lines.length : 0;
-
-                                if (listDensity > 0.4 || emojiDensity > 1) {
-                                    finalType = 'text';
-                                    detectedLang = null;
-                                }
-                            }
-
-                            page.content = { 
-                                type: finalType, 
-                                data: text,
-                                language: detectedLang 
-                            };
-                            page.detectedLanguage = detectedLang;
-                            page.thumbnailData = text.substring(0, 200);
-
                             if (!text) {
                                 reject(new Error('Empty data file'));
                                 return;
                             }
 
                             const lines = text.split('\n').filter(line => line.trim());
-                            const delimiter = page.file.name.endsWith('.tsv') ? '\t' : ',';
+                            
+                            // Auto-detect delimiter by checking first line
+                            let delimiter = ',';
+                            if (page.file.name.endsWith('.tsv')) {
+                                delimiter = '\t';
+                            } else if (lines.length > 0) {
+                                const firstLine = lines[0];
+                                const commas = (firstLine.match(/,/g) || []).length;
+                                const semicolons = (firstLine.match(/;/g) || []).length;
+                                const tabs = (firstLine.match(/\t/g) || []).length;
+                                const pipes = (firstLine.match(/\|/g) || []).length;
+                                
+                                // Use the most common delimiter
+                                const max = Math.max(commas, semicolons, tabs, pipes);
+                                if (max === semicolons) delimiter = ';';
+                                else if (max === tabs) delimiter = '\t';
+                                else if (max === pipes) delimiter = '|';
+                            }
                             
                             if (lines.length < 2) {
                                 reject(new Error('Data file must contain headers and at least one row'));
@@ -3329,7 +3308,7 @@
                                 return;
                             }
 
-                            page.content = { type: 'table', headers, rows };
+                            page.content = { type: 'table', headers, rows, delimiter };
                             page.thumbnailData = text.substring(0, 200);
                             resolve();
                         } catch (error) {
@@ -3407,6 +3386,95 @@
             return languageMap[ext] || null;
         }
 
+        function getTableTheme() {
+            const codeTheme = elements.codeTheme ? elements.codeTheme.value : 'light';
+            
+            if (codeTheme === 'light') {
+                return {
+                    background: '#ffffff',
+                    color: '#24292e',
+                    headerBg: '#f0f0f0',
+                    headerColor: '#000',
+                    border: '#ddd',
+                    hoverBg: '#f6f8fa'
+                };
+            } else {
+                return {
+                    background: '#1a1a1a',
+                    color: '#e0e0e0',
+                    headerBg: '#2a2a2a',
+                    headerColor: '#fff',
+                    border: '#3a3a3a',
+                    hoverBg: '#242424'
+                };
+            }
+        }
+
+        // Unified table rendering for previews (sidebar and main)
+        function renderTablePreview(page, container, options = {}) {
+            const theme = getTableTheme();
+            const isSmall = options.isSmall || false;
+            const maxRows = options.maxRows || (isSmall ? 3 : Infinity);
+            const maxCellLength = options.maxCellLength || (isSmall ? 12 : Infinity);
+            const fontSize = options.fontSize || (isSmall ? 7 : 11);
+            
+            // Don't set container background - let caller control it (white for sidebar, theme for main preview)
+            if (isSmall) {
+                container.style.padding = '8px';
+            }
+            
+            const table = document.createElement('table');
+            const tableStyles = isSmall 
+                ? `width: 100%; font-size: ${fontSize}px; margin: 0; background: ${theme.background}; color: ${theme.color}; border-collapse: collapse;`
+                : `--table-bg: ${theme.background}; --table-color: ${theme.color}; --table-border: ${theme.border}; --table-header-bg: ${theme.headerBg}; --table-header-color: ${theme.headerColor}; --table-hover-bg: ${theme.hoverBg};`;
+            table.style.cssText = tableStyles;
+            
+            // Headers
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            page.content.headers.forEach(header => {
+                const th = document.createElement('th');
+                const headerText = String(header);
+                th.textContent = maxCellLength === Infinity ? headerText : headerText.substring(0, maxCellLength);
+                if (isSmall) {
+                    th.style.cssText = `padding: 3px 2px; font-size: ${fontSize}px; background: ${theme.headerBg}; color: ${theme.headerColor}; border: 1px solid ${theme.border}; font-weight: 600;`;
+                }
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Body
+            const tbody = document.createElement('tbody');
+            const rowsToShow = maxRows === Infinity ? page.content.rows : page.content.rows.slice(0, maxRows);
+            rowsToShow.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    const cellText = String(cell);
+                    td.textContent = maxCellLength === Infinity ? cellText : cellText.substring(0, maxCellLength);
+                    if (isSmall) {
+                        td.style.cssText = `padding: 2px 2px; font-size: ${fontSize}px; border: 1px solid ${theme.border}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60px;`;
+                    }
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            
+            container.appendChild(table);
+            
+            // Add "more rows" indicator for small previews
+            if (isSmall && page.content.rows.length > maxRows) {
+                const moreText = document.createElement('div');
+                moreText.style.cssText = `font-size: ${fontSize}px; color: ${theme.color === '#24292e' ? '#666' : '#888'}; text-align: center; margin-top: 4px;`;
+                moreText.textContent = `+${page.content.rows.length - maxRows} more`;
+                container.appendChild(moreText);
+            }
+            
+            return table;
+        }
+
         function getLanguageDisplayName(language) {
             const displayNames = {
                 'javascript': 'JavaScript',
@@ -3433,10 +3501,7 @@
         }
 
         function getHighlightedCodeForPDF(code, language, fontFamily, theme = 'dark') {
-            console.log('getHighlightedCodeForPDF called:', 'language:', language, 'theme:', theme, 'hljs available:', typeof hljs !== 'undefined');
-            
             if (typeof hljs === 'undefined') {
-                console.warn('highlight.js not available for PDF export');
                 // If highlight.js isn't loaded, return plain code
                 return {
                     text: code,
@@ -3455,12 +3520,10 @@
                 
                 // Apply highlighting
                 hljs.highlightElement(tempCode);
-                console.log('PDF highlighting applied, parsing...');
                 
                 // Parse the highlighted HTML and convert to pdfMake format with theme
                 const highlightedContent = parseHighlightedCode(tempCode, fontFamily, theme);
                 
-                console.log('PDF highlighted content:', highlightedContent);
                 return highlightedContent;
             } catch (error) {
                 console.error('Error highlighting code for PDF:', error);
@@ -3536,8 +3599,6 @@
 
             const colorMap = theme === 'light' ? lightColorMap : darkColorMap;
             const defaultColor = theme === 'light' ? '#24292e' : '#c9d1d9';
-
-            console.log('parseHighlightedCode using font:', fontFamily, 'theme:', theme);
 
             const result = [];
             const nodes = codeElement.childNodes;
@@ -3635,10 +3696,8 @@
                     });
                     
                     if (codeContainer) {
-                        // Set background to match code theme
-                        const codeTheme = elements.codeTheme ? elements.codeTheme.value : 'light';
-                        const codeBg = codeTheme === 'light' ? '#ffffff' : '#0d1117';
-                        preview.style.backgroundColor = codeBg;
+                        // Preview background is always white (represents paper page)
+                        preview.style.backgroundColor = '#ffffff';
                         preview.appendChild(codeContainer);
                     } else {
                         const pre = document.createElement('pre');
@@ -3647,22 +3706,22 @@
                     }
                 } else if (page.content.type === 'text') {
                     // Plain text files - show preview with proper styling
+                    const codeTheme = elements.codeTheme ? elements.codeTheme.value : 'light';
+                    const textBg = codeTheme === 'light' ? '#ffffff' : '#0d1117';
+                    const textColor = codeTheme === 'light' ? '#000' : '#e0e0e0';
                     const pre = document.createElement('pre');
-                    pre.style.cssText = 'margin: 0; padding: 8px; font-size: 9px; line-height: 1.4; overflow: hidden; white-space: pre-wrap; word-wrap: break-word; font-family: "Courier New", monospace; background: #fff; color: #000;';
+                    pre.style.cssText = `margin: 0; padding: 8px; font-size: 9px; line-height: 1.4; overflow: hidden; white-space: pre-wrap; word-wrap: break-word; font-family: "Courier New", monospace; background: ${textBg}; color: ${textColor};`;
                     const maxPreviewLength = 300;
                     pre.textContent = (page.content.data || '').substring(0, maxPreviewLength) + 
                         ((page.content.data || '').length > maxPreviewLength ? '...' : '');
-                    preview.style.backgroundColor = '#fff';
+                    // Preview background is always white (represents paper page)
+                    preview.style.backgroundColor = '#ffffff';
                     preview.appendChild(pre);
                 } else if (page.content.type === 'table') {
-                    // Table preview
-                    const pre = document.createElement('pre');
-                    pre.style.cssText = 'margin: 0; padding: 8px; font-size: 9px; line-height: 1.3; overflow: hidden;';
-                    const tablePreview = 'Table: ' + page.content.headers.join(' | ') + '\n' +
-                        page.content.rows.slice(0, 3).map(row => row.join(' | ')).join('\n') +
-                        (page.content.rows.length > 3 ? '\n...' : '');
-                    pre.textContent = tablePreview;
-                    preview.appendChild(pre);
+                    // Table preview - preview background is always white (represents paper)
+                    // Only the table content uses dark theme
+                    preview.style.backgroundColor = '#ffffff';
+                    renderTablePreview(page, preview, { isSmall: true, maxRows: 3, maxCellLength: 12, fontSize: 7 });
                 } else {
                     const pre = document.createElement('pre');
                     pre.textContent = page.thumbnailData || '';
@@ -3724,6 +3783,11 @@
                 pageEl.addEventListener('drop', handleDrop);
                 pageEl.addEventListener('dragend', handleDragEnd);
 
+                // Mobile touch support for reordering
+                pageEl.addEventListener('touchstart', handleTouchStart, { passive: false });
+                pageEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+                pageEl.addEventListener('touchend', handleTouchEnd, { passive: false });
+
                 elements.pagesList.appendChild(pageEl);
             });
 
@@ -3781,9 +3845,86 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // Touch event support for mobile drag and drop
+        // Mobile touch support for drag-and-reorder
+        let touchDragging = null;
         let touchStartY = 0;
         let touchStartX = 0;
+        let touchTimeout = null;
+        let isDraggingTouch = false;
+
+        function handleTouchStart(e) {
+            // Don't interfere with delete button or other controls
+            if (e.target.closest('.page-actions')) {
+                return;
+            }
+            
+            touchDragging = e.currentTarget;
+            const touch = e.touches[0];
+            touchStartY = touch.clientY;
+            touchStartX = touch.clientX;
+            isDraggingTouch = false;
+            
+            // Add a slight delay before enabling drag to allow for taps/clicks
+            touchTimeout = setTimeout(() => {
+                isDraggingTouch = true;
+                touchDragging.classList.add('dragging');
+                touchDragging.style.opacity = '0.5';
+            }, 200);
+        }
+
+        function handleTouchMove(e) {
+            if (!touchDragging || !isDraggingTouch) {
+                return;
+            }
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            const currentY = touch.clientY;
+            
+            // Get element under touch point
+            const afterElement = getDragAfterElement(elements.pagesList, currentY);
+            
+            if (afterElement == null) {
+                elements.pagesList.appendChild(touchDragging);
+            } else {
+                elements.pagesList.insertBefore(touchDragging, afterElement);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+            
+            if (!touchDragging) {
+                return;
+            }
+            
+            // If we didn't actually start dragging, treat it as a click
+            if (!isDraggingTouch) {
+                touchDragging = null;
+                return;
+            }
+            
+            e.preventDefault();
+            touchDragging.classList.remove('dragging');
+            touchDragging.style.opacity = '';
+            
+            // Update page order
+            const pageElements = Array.from(elements.pagesList.querySelectorAll('.page-item'));
+            const newOrder = pageElements.map(el => el.dataset.pageId);
+            
+            const reorderedPages = newOrder.map(id => pages.find(p => p.id == id)).filter(p => p);
+            pages.length = 0;
+            pages.push(...reorderedPages);
+            
+            touchDragging = null;
+            isDraggingTouch = false;
+            
+            renderPages();
+        }
+
         function selectPage(pageId) {
             selectedPageId = pageId;
             const page = pages.find(p => p.id === pageId);
@@ -3854,8 +3995,6 @@
             const matches = [...text.matchAll(emojiRegex)];
             if (matches.length === 0) return text;
             
-            console.log(`Found ${matches.length} emojis in text`);
-            
             // Build inline content array for pdfmake
             const result = [];
             let lastIndex = 0;
@@ -3898,7 +4037,6 @@
                 }
             }
             
-            console.log('Converted text result:', result);
             return result;
         }
 
@@ -3987,11 +4125,8 @@
 
         function renderPreview(page) {
             if (!page || !page.content) {
-                console.log('renderPreview: No page or content', page);
                 return;
             }
-            
-            console.log('renderPreview called for:', page.name, 'type:', page.content.type);
 
             // Get current settings
             const fontFamily = elements.fontFamily ? elements.fontFamily.value : 'Helvetica';
@@ -4068,8 +4203,6 @@
                     // If it's a code file, show it with syntax highlighting
                     // If it's a code file, show it with syntax highlighting
                     if (page.content.type === 'code' && language) {
-                        console.log('Rendering code file:', page.name, 'Language:', language, 'hljs available:', typeof hljs !== 'undefined');
-                        
                         const codeContainer = renderCodeWithHighlighting(page, {
                             isSmall: false,
                             fontSize: fontSize,
@@ -4090,31 +4223,11 @@
                         container.appendChild(pre);
                     }
                 } else if (page.content.type === 'table') {
-                    const table = document.createElement('table');
+                    const tableWrapper = document.createElement('div');
+                    tableWrapper.style.cssText = 'width: 100%; overflow-x: auto; margin: 0;';
                     
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    page.content.headers.forEach(header => {
-                        const th = document.createElement('th');
-                        th.textContent = header;
-                        headerRow.appendChild(th);
-                    });
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-
-                    const tbody = document.createElement('tbody');
-                    page.content.rows.forEach(row => {
-                        const tr = document.createElement('tr');
-                        row.forEach(cell => {
-                            const td = document.createElement('td');
-                            td.textContent = cell;
-                            tr.appendChild(td);
-                        });
-                        tbody.appendChild(tr);
-                    });
-                    table.appendChild(tbody);
-
-                    container.appendChild(table);
+                    renderTablePreview(page, tableWrapper, { isSmall: false });
+                    container.appendChild(tableWrapper);
                 }
 
                 elements.previewArea.innerHTML = '';
@@ -4491,6 +4604,11 @@ async function exportPDF() {
         const fontSize = parseInt(elements.fontSize.value) || 10;
         const codeTheme = elements.codeTheme.value || 'light';
 
+        // Validate jsPDF is loaded before trying to use it
+        if (typeof window.jspdf === 'undefined') {
+            throw new Error('PDF library not loaded. Please refresh the page.');
+        }
+
         // Initialize jsPDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -4834,17 +4952,37 @@ async function exportPDF() {
                         throw new Error('Table data is incomplete');
                     }
                     
-                    // Use autoTable plugin if available, otherwise render simple table
+                    // Get theme colors for table
+                    const tableHeaderBg = codeTheme === 'light' ? [240, 240, 240] : [42, 42, 42];
+                    const tableHeaderText = codeTheme === 'light' ? [0, 0, 0] : [255, 255, 255];
+                    const tableBorder = codeTheme === 'light' ? [221, 221, 221] : [58, 58, 58];
+                    const tableText = codeTheme === 'light' ? [0, 0, 0] : [224, 224, 224];
+                    const tableBodyBg = codeTheme === 'light' ? [255, 255, 255] : [26, 26, 26];
+                    
+                    // Use autoTable plugin if available
                     if (typeof pdf.autoTable === 'function') {
                         pdf.autoTable({
                             startY: yPosition,
                             head: [page.content.headers],
                             body: page.content.rows,
                             margin: { left: margin, right: margin },
-                            styles: { fontSize: 9, cellPadding: 5 },
-                            headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+                            styles: { 
+                                fontSize: 9, 
+                                cellPadding: 5,
+                                textColor: tableText,
+                                fillColor: tableBodyBg,
+                                lineColor: tableBorder,
+                                lineWidth: 0.5
+                            },
+                            headStyles: { 
+                                fillColor: tableHeaderBg, 
+                                textColor: tableHeaderText, 
+                                fontStyle: 'bold' 
+                            },
                             theme: 'grid'
                         });
+                        // Update yPosition after autoTable
+                        yPosition = pdf.lastAutoTable.finalY + 20;
                     } else {
                         // Simple table rendering fallback
                         pdf.setFontSize(10);
@@ -4854,9 +4992,10 @@ async function exportPDF() {
                         let xPos = margin;
                         const colWidth = contentWidth / page.content.headers.length;
                         
-                        pdf.setFillColor(240, 240, 240);
+                        pdf.setFillColor(...tableHeaderBg);
                         pdf.rect(margin, yPosition, contentWidth, 20, 'F');
                         
+                        pdf.setTextColor(...tableHeaderText);
                         page.content.headers.forEach(header => {
                             pdf.text(String(header || '').substring(0, 30), xPos + 5, yPosition + 13);
                             xPos += colWidth;
@@ -4867,12 +5006,19 @@ async function exportPDF() {
                         // Draw rows
                         pdf.setFont(fontFamily, 'normal');
                         pdf.setFontSize(9);
+                        pdf.setTextColor(...tableText);
                         
-                        page.content.rows.forEach(row => {
+                        page.content.rows.forEach((row, rowIndex) => {
                             if (yPosition > pageHeight - bottomMargin - 20) {
                                 pdf.addPage();
                                 currentPage++;
                                 yPosition = topMargin;
+                            }
+                            
+                            // Alternate row background
+                            if (rowIndex % 2 === 1) {
+                                pdf.setFillColor(...tableBodyBg);
+                                pdf.rect(margin, yPosition, contentWidth, 20, 'F');
                             }
                             
                             xPos = margin;
@@ -4901,11 +5047,6 @@ async function exportPDF() {
         // Validate that we have content
         if (validPages.length === 0) {
             throw new Error('No content could be generated from the pages');
-        }
-
-        // Validate jsPDF is loaded
-        if (typeof window.jspdf === 'undefined') {
-            throw new Error('PDF library not loaded. Please refresh the page.');
         }
 
         // Download the PDF
@@ -5027,10 +5168,8 @@ async function exportPDF() {
                     
                     if (codeContainer) {
                         previewDiv.innerHTML = '';
-                        // Set background to match code theme
-                        const codeTheme = elements.codeTheme ? elements.codeTheme.value : 'light';
-                        const codeBg = codeTheme === 'light' ? '#ffffff' : '#0d1117';
-                        previewDiv.style.backgroundColor = codeBg;
+                        // Preview background is always white (represents paper)
+                        previewDiv.style.backgroundColor = '#ffffff';
                         previewDiv.appendChild(codeContainer);
                     } else {
                         // Fallback to plain text
@@ -5042,27 +5181,29 @@ async function exportPDF() {
                         previewDiv.appendChild(pre);
                     }
                 } else if (page.content.type === 'text') {
+                    const codeTheme = elements.codeTheme ? elements.codeTheme.value : 'light';
+                    const textBg = codeTheme === 'light' ? '#ffffff' : '#0d1117';
+                    const textColor = codeTheme === 'light' ? '#000' : '#e0e0e0';
                     const pre = document.createElement('pre');
-                    pre.style.cssText = 'margin:0;padding:8px;font-size:9px;line-height:1.4;overflow:hidden;white-space:pre-wrap;word-wrap:break-word;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";background:#fff;color:#000;';
+                    pre.style.cssText = `margin:0;padding:8px;font-size:9px;line-height:1.4;overflow:hidden;white-space:pre-wrap;word-wrap:break-word;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";background:${textBg};color:${textColor};`;
                     const maxPreviewLength = 300;
                     pre.textContent = (page.content.data || '').substring(0, maxPreviewLength) + 
                         ((page.content.data || '').length > maxPreviewLength ? '...' : '');
                     previewDiv.innerHTML = '';
-                    previewDiv.style.backgroundColor = '#fff';
+                    // Preview background is always white (represents paper)
+                    previewDiv.style.backgroundColor = '#ffffff';
                     previewDiv.appendChild(pre);
                 } else if (page.content.type === 'table') {
-                    const pre = document.createElement('pre');
-                    const tablePreview = 'Table: ' + page.content.headers.join(' | ') + '\n' +
-                        page.content.rows.slice(0, 3).map(row => row.join(' | ')).join('\n') +
-                        (page.content.rows.length > 3 ? '\n...' : '');
-                    pre.textContent = tablePreview;
+                    // Table preview - background always white (represents paper)
                     previewDiv.innerHTML = '';
-                    previewDiv.appendChild(pre);
+                    previewDiv.style.backgroundColor = '#ffffff';
+                    renderTablePreview(page, previewDiv, { isSmall: true, maxRows: 3, maxCellLength: 12, fontSize: 7 });
                 }
             }, 100);
         }
     </script>
 </body>
 </html>
+
 
 
