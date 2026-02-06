@@ -52,12 +52,12 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
 This application is entirely self-contained in a single file. You can save it to your device and use it anywhere—even without an internet connection.
 
 ### 1. Download from GitHub
-1. On the main repository page, click on the file named `PDFAnything.html` (or `index.html`).
+1. On the main repository page, click on the file named `index.html`.
 2. On the top right of the file content area, look for the **"Download raw file"** button.
 3. Choose a location on your computer to save it.
 
 ### 2. Rename the File (Optional)
-* The file will likely save as `PDFAnything.html` or `index.html`. 
+* The file will likely save as `index.html`. 
 * You can rename it to something more descriptive, like `PDFConverter.html` or `ezPDF.html`. 
 * **Note:** Ensure the name ends in `.html`.
 
