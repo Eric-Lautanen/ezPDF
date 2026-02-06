@@ -52,7 +52,7 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
 This application is entirely self-contained in a single file. You can save it to your device and use it anywhere—even without an internet connection.
 
 ### 1. Download from GitHub
-1. 👉 [Download ezPDF (index.html)](https://github.com/Eric-Lautanen/ezPDF/raw/main/index.html)
+1. 👉 [Download ezPDF (index.html)](https://raw.githubusercontent.com/Eric-Lautanen/ezPDF/main/index.html)
 2. Choose a location on your computer to save it.
 
 ### 2. Rename the File (Optional)
