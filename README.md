@@ -15,7 +15,7 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
 * **Syntax Highlighting:** Code files are beautifully highlighted with theme support (Light & Dark).
 * **Real-Time Preview:** See exactly how your PDF will look before exporting, with live updates as you adjust settings.
 * **Paste Text Area:** Quick input area for adding plain text notes and snippets.
-* **Drag & Drop:** Drag files directly into the window or reorder pages via drag-and-drop in the sidebar.
+* **Drag & Drop:** Drag files directly into the window.
 * **Mobile Optimized:** Full mobile support with touch gestures, responsive layout, and optimized scrolling.
 * **Extensive Customization:** 
     * Document Title
