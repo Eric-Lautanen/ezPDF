@@ -15,7 +15,7 @@ A powerful, privacy-focused, **100% offline-capable** client-side web applicatio
 * **Syntax Highlighting:** Code files are beautifully highlighted with theme support (Light & Dark).
 * **Real-Time Preview:** See how your PDF will look before exporting, with live updates as you adjust settings.
 * **Paste Text Area:** Quick input area for adding plain text notes and snippets.
-* **Drag & Drop:** Drag files directly into the window.
+* **Drag & Drop:** Drag files directly into the window and drag to reorder pages on sidebar/slideout.
 * **Mobile Optimized:** Full mobile support with touch gestures, responsive layout, and optimized scrolling.
 * **Extensive Customization:** 
     * Document Title
@@ -83,14 +83,6 @@ This application is entirely self-contained in a single file. You can save it to
 * **Syntax Highlighting:** [highlight.js](https://highlightjs.org/) (GitHub Light & Dark themes embedded inline)
 * **Self-Contained:** All libraries and stylesheets bundled inside the HTML file for zero-dependency offline use
 * **Privacy-First:** All processing is done in-memory; nothing is ever sent to a server
-
-## 📋 Todo List
-
-- [ ] Add emoji support in text content
-- [ ] Add page orientation support (Portrait/Landscape)
-- [ ] Add custom margin controls
-- [ ] Add watermark support
-- [ ] Improve table rendering for very wide CSV files
 
 ## 🐛 Known Issues
 
